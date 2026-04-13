@@ -128,6 +128,26 @@ html,body{height:100%;background:var(--bg);color:var(--ink);font-family:var(--f)
 .del{background:none;border:none;color:transparent;font-size:14px;cursor:pointer;padding:1px 4px;transition:color .12s;flex-shrink:0;font-family:var(--f);font-weight:300}
 .task-row:hover .del{color:var(--ink4)}
 .del:hover{color:var(--rose) !important}
+.edt{background:none;border:none;color:transparent;font-size:12px;cursor:pointer;padding:1px 4px;transition:color .12s;flex-shrink:0;font-family:var(--fsc);font-weight:400;letter-spacing:.04em}
+.task-row:hover .edt{color:var(--ink4)}
+.edt:hover{color:var(--ink2) !important}
+
+/* edit modal */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(34,30,26,.45);z-index:100;align-items:center;justify-content:center}
+.modal-bg.open{display:flex}
+.modal{background:var(--bg);border:1px solid var(--bdr2);padding:28px 28px 22px;width:min(440px,92vw);position:relative}
+.modal-title{font-family:var(--fsc);font-size:11px;letter-spacing:.2em;color:var(--ink3);margin-bottom:18px;text-transform:lowercase}
+.modal input[type=text]{width:100%;background:transparent;border:none;border-bottom:1.5px solid var(--bdr2);padding:5px 0 7px;font-family:var(--f);font-size:14px;color:var(--ink);outline:none;transition:border-color .18s;margin-bottom:16px}
+.modal input[type=text]:focus{border-bottom-color:var(--rose)}
+.modal-date-row{display:flex;align-items:center;gap:8px;margin-bottom:16px}
+.modal-date-lbl{font-family:var(--fsc);font-size:9px;letter-spacing:.16em;color:var(--ink3);white-space:nowrap;text-transform:lowercase}
+.modal input[type=date]{background:transparent;border:none;border-bottom:1px solid var(--bdr);padding:3px 0;font-size:12px;color:var(--ink2);outline:none;font-family:var(--f)}
+.modal .seg-row{margin-bottom:12px}
+.modal-actions{display:flex;gap:8px;margin-top:4px}
+.modal-save{flex:1;padding:8px 0;background:var(--ink);border:none;font-family:var(--fsc);font-size:10px;letter-spacing:.2em;color:var(--bg);cursor:pointer;transition:background .15s;text-transform:lowercase}
+.modal-save:hover{background:var(--ink2)}
+.modal-cancel{padding:8px 16px;background:transparent;border:1px solid var(--bdr);font-family:var(--fsc);font-size:10px;letter-spacing:.2em;color:var(--ink3);cursor:pointer;transition:all .15s;text-transform:lowercase}
+.modal-cancel:hover{border-color:var(--bdr2);color:var(--ink2)}
 
 .empty{padding:64px 32px;text-align:center;color:var(--ink4);font-family:var(--f);font-style:italic;font-weight:300;font-size:14px;line-height:2.4}
 .empty-rule{display:block;width:40px;height:1px;background:var(--bdr2);margin:0 auto 16px}
@@ -213,6 +233,40 @@ html,body{height:100%;background:var(--bg);color:var(--ink);font-family:var(--f)
       <div class="task-list-wrap" id="task-container">
         <div class="loading">cargando pendientes…</div>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- edit modal -->
+<div class="modal-bg" id="modal-bg" onclick="closeModal(event)">
+  <div class="modal">
+    <div class="modal-title">editar pendiente</div>
+    <input type="text" id="modal-text" placeholder="texto del pendiente"/>
+    <div class="modal-date-row">
+      <span class="modal-date-lbl">fecha</span>
+      <input type="text" id="modal-date-text" placeholder="18 abr · opcional" style="flex:1;margin-bottom:0"/>
+      <input type="date" id="modal-date-picker"/>
+    </div>
+    <div class="seg-group" style="margin-bottom:10px">
+      <span class="field-label">categoría</span>
+      <div class="seg-row" id="modal-cat-btns">
+        <button class="sb sc-A" data-mcat="A" onclick="setModalCat('A',this)">acad.</button>
+        <button class="sb sc-P" data-mcat="P" onclick="setModalCat('P',this)">proy.</button>
+        <button class="sb sc-V" data-mcat="V" onclick="setModalCat('V',this)">vida</button>
+        <button class="sb sc-I" data-mcat="I" onclick="setModalCat('I',this)">ideas</button>
+      </div>
+    </div>
+    <div class="seg-group" style="margin-bottom:14px">
+      <span class="field-label">prioridad</span>
+      <div class="seg-row" id="modal-pri-btns">
+        <button class="sb sp-hoy" data-mpri="hoy" onclick="setModalPri('hoy',this)">hoy</button>
+        <button class="sb sp-sem" data-mpri="sem" onclick="setModalPri('sem',this)">semana</button>
+        <button class="sb sp-alg" data-mpri="alg" onclick="setModalPri('alg',this)">algún día</button>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="modal-cancel" onclick="closeModal()">cancelar</button>
+      <button class="modal-save" onclick="saveEdit()">guardar</button>
     </div>
   </div>
 </div>
@@ -393,12 +447,76 @@ function render(){
         <span class="task-text" title="${t.text}">${t.text}</span>
         ${dchip(t.date)}
         <span class="cchip cc${t.cat}">${CAT_NAMES[t.cat]}</span>
+        <button class="edt" onclick="openEdit(${t.id})" title="editar">✎</button>
         <button class="del" onclick="del(${t.id})" title="eliminar">×</button>
       </div>`;
     });
   });
   document.getElementById('task-container').innerHTML=html;
 }
+
+let editingId = null;
+let modalSel = {cat:'A', pri:'hoy'};
+
+function openEdit(id){
+  const t = tasks.find(x=>x.id===id); if(!t) return;
+  editingId = id;
+  modalSel = {cat:t.cat, pri:t.pri};
+  document.getElementById('modal-text').value = t.text;
+  document.getElementById('modal-date-text').value = t.date||'';
+  document.getElementById('modal-date-picker').value = t.date||'';
+  document.querySelectorAll('[data-mcat]').forEach(b=>{
+    b.classList.remove('sb-active');
+    if(b.dataset.mcat===t.cat) b.classList.add('sb-active');
+  });
+  document.querySelectorAll('[data-mpri]').forEach(b=>{
+    b.classList.remove('sb-active');
+    if(b.dataset.mpri===t.pri) b.classList.add('sb-active');
+  });
+  document.getElementById('modal-bg').classList.add('open');
+  setTimeout(()=>document.getElementById('modal-text').focus(),80);
+}
+
+function closeModal(e){
+  if(e && e.target!==document.getElementById('modal-bg')) return;
+  document.getElementById('modal-bg').classList.remove('open');
+  editingId=null;
+}
+
+function setModalCat(v,btn){
+  modalSel.cat=v;
+  document.querySelectorAll('[data-mcat]').forEach(b=>b.classList.remove('sb-active'));
+  btn.classList.add('sb-active');
+}
+function setModalPri(v,btn){
+  modalSel.pri=v;
+  document.querySelectorAll('[data-mpri]').forEach(b=>b.classList.remove('sb-active'));
+  btn.classList.add('sb-active');
+}
+
+async function saveEdit(){
+  if(!editingId) return;
+  const t = tasks.find(x=>x.id===editingId); if(!t) return;
+  const txt = document.getElementById('modal-text').value.trim(); if(!txt) return;
+  const raw = document.getElementById('modal-date-text').value||document.getElementById('modal-date-picker').value||'';
+  const d = parseDate(raw);
+  t.text = txt;
+  t.cat = modalSel.cat;
+  t.pri = modalSel.pri;
+  t.date = (d&&!isNaN(d))?d.toISOString().split('T')[0]:null;
+  document.getElementById('modal-bg').classList.remove('open');
+  editingId=null;
+  render();
+  setSyncStatus('syncing');
+  try{
+    await fetch(`${SB_URL}/rest/v1/pendientes?id=eq.${t.id}`,{method:'PATCH',headers:{...HEADERS,'Prefer':'return=minimal'},body:JSON.stringify({text:t.text,cat:t.cat,pri:t.pri,date:t.date})});
+    setSyncStatus('ok');
+  }catch(e){setSyncStatus('error');}
+  localStorage.setItem('pend-backup',JSON.stringify(tasks));
+}
+
+document.getElementById('modal-date-picker').addEventListener('change',function(){if(this.value)document.getElementById('modal-date-text').value=this.value;});
+document.getElementById('modal-text').addEventListener('keydown',e=>{if(e.key==='Enter')saveEdit();if(e.key==='Escape')closeModal();});
 
 document.getElementById('task-input').addEventListener('keydown',e=>{if(e.key==='Enter')addTask();});
 document.getElementById('date-picker').addEventListener('change',function(){if(this.value)document.getElementById('date-text').value=this.value;});
