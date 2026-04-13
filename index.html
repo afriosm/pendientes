@@ -68,8 +68,8 @@ html,body{height:100%;background:var(--bg);color:var(--ink);font-family:var(--f)
 .sb:hover:not(.sb-active){border-color:var(--bdr2);color:var(--ink2);background:var(--bg1)}
 .sb-active{font-weight:500}
 .sb-active::after{content:'✓';position:absolute;top:2px;right:3px;font-size:7px;line-height:1;opacity:.7}
-.sb-active.sc-A{background:var(--rose-l);border-color:var(--rose);color:var(--rose-d)}
-.sb-active.sc-P{background:var(--sage-l);border-color:var(--sage);color:var(--sage)}
+.sb-active.sc-U{background:var(--rose-l);border-color:var(--rose);color:var(--rose-d)}
+.sb-active.sc-T{background:var(--sage-l);border-color:var(--sage);color:var(--sage)}
 .sb-active.sc-V{background:var(--amb-l);border-color:var(--amb);color:var(--amb)}
 .sb-active.sc-I{background:var(--sl-l);border-color:var(--sl);color:var(--sl)}
 .sb-active.sp-hoy{background:var(--rose-l);border-color:var(--rose);color:var(--rose-d)}
@@ -120,8 +120,8 @@ html,body{height:100%;background:var(--bg);color:var(--ink);font-family:var(--f)
 .dc-ok{color:var(--sage)}.dc-soon{color:var(--amb)}.dc-urgent{color:var(--rose)}.dc-over{color:var(--rose-d);font-weight:500;font-style:normal}.dc-none{color:var(--ink4)}
 
 .cchip{font-family:var(--fsc);font-size:9px;letter-spacing:.1em;padding:2px 7px;border:1px solid;flex-shrink:0;text-transform:lowercase}
-.ccA{border-color:var(--rose);color:var(--rose-d);background:var(--rose-l)}
-.ccP{border-color:var(--sage);color:var(--sage);background:var(--sage-l)}
+.ccU{border-color:var(--rose);color:var(--rose-d);background:var(--rose-l)}
+.ccT{border-color:var(--sage);color:var(--sage);background:var(--sage-l)}
 .ccV{border-color:var(--amb);color:var(--amb);background:var(--amb-l)}
 .ccI{border-color:var(--sl);color:var(--sl);background:var(--sl-l)}
 
@@ -131,6 +131,10 @@ html,body{height:100%;background:var(--bg);color:var(--ink);font-family:var(--f)
 .edt{background:none;border:none;color:transparent;font-size:12px;cursor:pointer;padding:1px 4px;transition:color .12s;flex-shrink:0;font-family:var(--fsc);font-weight:400;letter-spacing:.04em}
 .task-row:hover .edt{color:var(--ink4)}
 .edt:hover{color:var(--ink2) !important}
+.drag-handle{color:transparent;font-size:12px;cursor:grab;padding:1px 4px;flex-shrink:0;user-select:none;transition:color .12s}
+.task-row:hover .drag-handle{color:var(--ink4)}
+.drag-handle:active{cursor:grabbing}
+.drag-ghost{opacity:.4;background:var(--bg2)}
 
 /* edit modal */
 .modal-bg{display:none;position:fixed;inset:0;background:rgba(34,30,26,.45);z-index:100;align-items:center;justify-content:center}
@@ -202,8 +206,8 @@ html,body{height:100%;background:var(--bg);color:var(--ink);font-family:var(--f)
         <div class="seg-group">
           <span class="field-label">categoría</span>
           <div class="seg-row" id="cat-btns">
-            <button class="sb sb-active sc-A" data-cat="A" onclick="setCat('A',this)">acad.</button>
-            <button class="sb sc-P" data-cat="P" onclick="setCat('P',this)">proy.</button>
+            <button class="sb sb-active sc-U" data-cat="U" onclick="setCat('U',this)">univ.</button>
+            <button class="sb sc-T" data-cat="T" onclick="setCat('T',this)">trab.</button>
             <button class="sb sc-V" data-cat="V" onclick="setCat('V',this)">vida</button>
             <button class="sb sc-I" data-cat="I" onclick="setCat('I',this)">ideas</button>
           </div>
@@ -250,8 +254,8 @@ html,body{height:100%;background:var(--bg);color:var(--ink);font-family:var(--f)
     <div class="seg-group" style="margin-bottom:10px">
       <span class="field-label">categoría</span>
       <div class="seg-row" id="modal-cat-btns">
-        <button class="sb sc-A" data-mcat="A" onclick="setModalCat('A',this)">acad.</button>
-        <button class="sb sc-P" data-mcat="P" onclick="setModalCat('P',this)">proy.</button>
+        <button class="sb sc-U" data-mcat="U" onclick="setModalCat('U',this)">univ.</button>
+        <button class="sb sc-T" data-mcat="T" onclick="setModalCat('T',this)">trab.</button>
         <button class="sb sc-V" data-mcat="V" onclick="setModalCat('V',this)">vida</button>
         <button class="sb sc-I" data-mcat="I" onclick="setModalCat('I',this)">ideas</button>
       </div>
@@ -277,14 +281,14 @@ const SB_KEY = 'sb_publishable_3SPQmBw4jts800LKlBdYOA_BYlhqfDa';
 const HEADERS = {'Content-Type':'application/json','apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY};
 
 const MONTHS={ene:0,feb:1,mar:2,abr:3,may:4,jun:5,jul:6,ago:7,sep:8,oct:9,nov:10,dic:11,jan:0,apr:3,aug:7,dec:11};
-const CAT_NAMES={A:'académico',P:'proyectos',V:'vida',I:'ideas'};
-const NAV_COLORS={all:'#a86b65',urgent:'#a86b65',dated:'#5e7a62',A:'#a86b65',P:'#5e7a62',V:'#8c6830',I:'#4f6070',done:'#bfb3a8'};
+const CAT_NAMES={U:'universidad',T:'trabajo',V:'vida',I:'ideas'};
+const NAV_COLORS={all:'#a86b65',urgent:'#a86b65',dated:'#5e7a62',U:'#a86b65',T:'#5e7a62',V:'#8c6830',I:'#4f6070',done:'#bfb3a8'};
 const VIEWS=[
   {id:'all',    label:'todo',        filter:t=>!t.done},
   {id:'urgent', label:'urgente',     filter:t=>!t.done&&(t.pri==='hoy'||['urgent','over'].includes(dstat(t.date)))},
   {id:'dated',  label:'con fecha',   filter:t=>!t.done&&!!t.date},
-  {id:'A',      label:'académico',   filter:t=>!t.done&&t.cat==='A'},
-  {id:'P',      label:'proyectos',   filter:t=>!t.done&&t.cat==='P'},
+  {id:'U',      label:'universidad', filter:t=>!t.done&&t.cat==='U'},
+  {id:'T',      label:'trabajo',     filter:t=>!t.done&&t.cat==='T'},
   {id:'V',      label:'vida',        filter:t=>!t.done&&t.cat==='V'},
   {id:'I',      label:'ideas',       filter:t=>!t.done&&t.cat==='I'},
   {id:'done',   label:'completados', filter:t=>t.done},
@@ -324,7 +328,7 @@ function dchip(iso){
   return`<span class="dchip ${cls}">${txt}</span>`;
 }
 
-let sel={cat:'A',pri:'hoy'},activeView='all';
+let sel={cat:'U',pri:'hoy'},activeView='all';
 let tasks=[];
 
 async function loadTasks(){
@@ -387,7 +391,16 @@ async function del(id){
 }
 
 function setCat(v,btn){sel.cat=v;document.querySelectorAll('[data-cat]').forEach(b=>b.classList.remove('sb-active'));btn.classList.add('sb-active');}
-function setPri(v,btn){sel.pri=v;document.querySelectorAll('[data-pri]').forEach(b=>b.classList.remove('sb-active'));btn.classList.add('sb-active');}
+function setPri(v,btn){
+  sel.pri=v;
+  document.querySelectorAll('[data-pri]').forEach(b=>b.classList.remove('sb-active'));
+  btn.classList.add('sb-active');
+  if(v==='hoy'){
+    const today=new Date().toISOString().split('T')[0];
+    document.getElementById('date-text').value=today;
+    document.getElementById('date-picker').value=today;
+  }
+}
 function setView(id){activeView=id;render();}
 
 function sortTasks(arr){
@@ -441,7 +454,8 @@ function render(){
     html+=`<div class="group-head"><div class="gh-tick"></div><span class="gh-label">${g}</span><div class="gh-line"></div></div>`;
     groups[g].forEach(t=>{
       const over=!t.done&&dstat(t.date)==='over';
-      html+=`<div class="task-row${t.done?' done':''}${over?' overdue':''}">
+      html+=`<div class="task-row${t.done?' done':''}${over?' overdue':''}" data-id="${t.id}">
+        <div class="drag-handle" title="arrastrar">⋮⋮</div>
         <div class="chk" onclick="toggleDone(${t.id})">${t.done?'✓':''}</div>
         <div class="pri-pip pp-${t.pri}"></div>
         <span class="task-text" title="${t.text}">${t.text}</span>
@@ -453,6 +467,7 @@ function render(){
     });
   });
   document.getElementById('task-container').innerHTML=html;
+  if(activeView!=='done') initSortable();
 }
 
 let editingId = null;
@@ -525,6 +540,29 @@ document.getElementById('date-text').addEventListener('blur',function(){const d=
 setSyncStatus('syncing');
 loadTasks();
 setInterval(loadTasks, 30000);
+</script>
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
+<script>
+let sortable = null;
+
+function initSortable(){
+  const container = document.getElementById('task-container');
+  if(sortable) sortable.destroy();
+  sortable = new Sortable(container, {
+    animation: 150,
+    handle: '.drag-handle',
+    ghostClass: 'drag-ghost',
+    onEnd: async function(evt){
+      // reorder tasks array based on new DOM order
+      const rows = container.querySelectorAll('.task-row');
+      const newOrder = Array.from(rows).map(r=>+r.dataset.id);
+      const reordered = newOrder.map(id=>tasks.find(t=>t.id===id)).filter(Boolean);
+      const rest = tasks.filter(t=>!newOrder.includes(t.id));
+      tasks = [...reordered, ...rest];
+      localStorage.setItem('pend-backup', JSON.stringify(tasks));
+    }
+  });
+}
 </script>
 </body>
 </html>
